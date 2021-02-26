@@ -7,8 +7,8 @@ usersRouter.post('/', async (req, res) => {
   const body = req.body;
   const saltRounds = 10;
   const passwordHash = await bcrypt.hash(body.password, saltRounds);
-  logger.info('received post to add new user');
 
+  logger.info('received post to add new user');
   if (body.password.length < 3) {
     res.status(406).send ('too short password! need 3 chars min.');
   } else {
@@ -18,13 +18,13 @@ usersRouter.post('/', async (req, res) => {
       name: body.name,
       passwordHash,
     });
-
     const savedUser = await user.save();
     res.json(savedUser);
   }
 });
 
 // show all users
+/* disabled as not needed
 usersRouter.get('/', async (req, res) => {
   const user = await User
     .find({}).populate('notes');
@@ -35,12 +35,5 @@ usersRouter.get('/', async (req, res) => {
     res.status(404).end();
   }
 });
-/*
-usersRouter.get('/', async (request, response) => {
-  const users = await User
-    .find({}).populate('notes')
-
-  response.json(users.map(u => u.toJSON()))
-})
 */
 module.exports = usersRouter;
