@@ -16,7 +16,7 @@ const userSchema = mongoose.Schema({
   notes: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Blog'
+      ref: 'Password'
     }
   ],
 });
