@@ -7,10 +7,12 @@ const bcrypt = require('bcrypt');
 
 // show all passwords
 passwordsRouter.get('/', async (req, res) => {
-  const password = await Password
+  console.log('received get for passwords');
+  const passwords = await Password
     .find({}).populate('user', { username: 1, name: 1 });
-  if (password) {
-    res.json(password);
+  if (passwords) {
+    console.log('sending: ', passwords);
+    res.json(passwords);
   } else {
     res.status(404).end();
   }
@@ -30,6 +32,7 @@ passwordsRouter.delete('/:id', async (req, res) => {
 */
 // add a password
 passwordsRouter.post('/', async (req, res) => {
+  console.log('received post for new pass: ', req.body);
   const body = req.body;
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
   const saltRounds = 10;
