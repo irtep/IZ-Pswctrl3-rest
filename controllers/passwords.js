@@ -4,14 +4,43 @@ const User = require('../models/user');
 const logger = require('../utils/logger');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const key = Buffer.alloc(32, process.env.FORKEY);
+
+function encrypt(text, iv) {
+  let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+};
+
+function decrypt(text) {
+  let iv = Buffer.from(text.iv, 'hex');
+  let encryptedText = Buffer.from(text.encryptedData, 'hex');
+  let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
+};
 
 // show all passwords
 passwordsRouter.get('/', async (req, res) => {
-  console.log('received get for passwords');
+  const algorithm = process.env.ALGO;
+
+  console.log('received get for passwords', req.body, req.token);
+  //const body = req.body;
+  const decodedToken = jwt.verify(req.token, process.env.SECRET);
+  if (!req.token || !decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' });
+  }
   const passwords = await Password
     .find({}).populate('user', { username: 1, name: 1 });
   if (passwords) {
     console.log('sending: ', passwords);
+    const decryptPsws = passwords.map( psw => {
+      const decrypted = decrypt(psw.password, key);
+      psw.password = decrypted;
+    });
     res.json(passwords);
   } else {
     res.status(404).end();
@@ -30,13 +59,15 @@ passwordsRouter.delete('/:id', async (req, res) => {
   }
 });
 */
+
 // add a password
 passwordsRouter.post('/', async (req, res) => {
+  const algorithm = process.env.ALGO;
+  const iv = crypto.randomBytes(16);
   console.log('received post for new pass: ', req.body);
   const body = req.body;
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
-  const saltRounds = 10;
-  const passwordHash = await bcrypt.hash(body.password, saltRounds);
+  const encrypted = encrypt(body.password, iv);
   if (!req.token || !decodedToken.id) {
     return res.status(401).json({ error: 'token missing or invalid' });
   }
@@ -45,7 +76,7 @@ passwordsRouter.post('/', async (req, res) => {
   const password = new Password({
     page: body.page,
     username: body.username,
-    password: passwordHash,
+    password: encrypted,
     user: user
   });
 
