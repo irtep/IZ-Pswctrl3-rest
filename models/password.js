@@ -9,8 +9,7 @@ const passwordSchema = mongoose.Schema({
     type: String,
     minLength: 3,
     required: true },
-  password: { type: String,
-    minLength: 3,
+  password: { type: Object,
     required: true },
   user: {
     type: mongoose.Schema.Types.ObjectId,
