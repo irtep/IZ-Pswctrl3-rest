@@ -26,9 +26,6 @@ function decrypt(text) {
 // show all passwords
 passwordsRouter.get('/', async (req, res) => {
   const algorithm = process.env.ALGO;
-
-  console.log('received get for passwords', req.body, req.token);
-  //const body = req.body;
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
   if (!req.token || !decodedToken.id) {
     return res.status(401).json({ error: 'token missing or invalid' });
@@ -36,7 +33,6 @@ passwordsRouter.get('/', async (req, res) => {
   const passwords = await Password
     .find({}).populate('user', { username: 1, name: 1 });
   if (passwords) {
-    console.log('sending: ', passwords);
     const decryptPsws = passwords.map( psw => {
       const decrypted = decrypt(psw.password, key);
       psw.password = decrypted;
@@ -46,19 +42,6 @@ passwordsRouter.get('/', async (req, res) => {
     res.status(404).end();
   }
 });
-/*
-// delete password
-passwordsRouter.delete('/:id', async (req, res) => {
-  const decodedToken = jwt.verify(req.token, process.env.SECRET);
-  const password = await Password.findById(req.params.id);
-  if (password.user.toString() === decodedToken.id) {
-    await Password.findByIdAndRemove(req.params.id);
-    res.status(204).end();
-  } else {
-    return res.status(401).json({ error: 'not authorized to delete' });
-  }
-});
-*/
 
 // add a password
 passwordsRouter.post('/', async (req, res) => {
@@ -111,6 +94,7 @@ passwordsRouter.get('/:id', async (req, res) => {
 
 // delete password
 passwordsRouter.delete('/:id', async (req, res) => {
+  console.log('delete request at server', req.params.id);
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
   const password = await Password.findById(req.params.id);
   if (password.user.toString() === decodedToken.id) {
@@ -121,19 +105,30 @@ passwordsRouter.delete('/:id', async (req, res) => {
   }
 });
 
-//modificate password
+//modificate any field
 passwordsRouter.put('/:id', async (req, res) => {
+  console.log('edit request!');
+  const decodedToken = jwt.verify(req.token, process.env.SECRET);
   const field = req.body.field;
-  const newValue = req.body.newValue;
-
-  // get password that user wants to edit
+  let newValue = req.body.newValue;
+  if (req.body.field = 'password') {
+    newValue = encrypt(req.body.newValue, iv);
+  }
   const password = await Password.findById(req.params.id);
-  logger.info('got password: ', password);
-  password[field] = newValue;
-
-  // make the modification
-  await Password.findByIdAndUpdate(req.params.id, password, { new: true });
-  res.json(password);
+  if (!req.token || !decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' });
+  }
+  if (password.user.toString() === decodedToken.id) {
+    // get password that user wants to edit
+    //const password = await Password.findById(req.params.id);
+    logger.info('got password: ', password);
+    password[field] = newValue;
+    // make the modification
+    await Password.findByIdAndUpdate(req.params.id, password, { new: true });
+    res.json(password);
+  } else {
+    return res.status(401).json({ error: 'not authorized to modificate' });
+  }
 });
 
 module.exports = passwordsRouter;

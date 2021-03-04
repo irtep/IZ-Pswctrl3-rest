@@ -19,6 +19,7 @@ const userSchema = mongoose.Schema({
       ref: 'Password'
     }
   ],
+  admin: Boolean
 });
 
 userSchema.set('toJSON', {
