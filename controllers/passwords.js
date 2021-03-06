@@ -111,7 +111,8 @@ passwordsRouter.put('/:id', async (req, res) => {
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
   const field = req.body.field;
   let newValue = req.body.newValue;
-  if (req.body.field = 'password') {
+  if (req.body.field === 'password') {
+    const iv = crypto.randomBytes(16);
     newValue = encrypt(req.body.newValue, iv);
   }
   const password = await Password.findById(req.params.id);
@@ -119,8 +120,6 @@ passwordsRouter.put('/:id', async (req, res) => {
     return res.status(401).json({ error: 'token missing or invalid' });
   }
   if (password.user.toString() === decodedToken.id) {
-    // get password that user wants to edit
-    //const password = await Password.findById(req.params.id);
     logger.info('got password: ', password);
     password[field] = newValue;
     // make the modification
