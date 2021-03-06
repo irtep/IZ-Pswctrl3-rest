@@ -9,6 +9,10 @@ usersRouter.post('/', async (req, res) => {
   const body = req.body;
   const saltRounds = 10;
   const passwordHash = await bcrypt.hash(body.password, saltRounds);
+  let admin = false;
+  if (body.admin) {
+    admin = true;
+  };
 
   logger.info('received post to add new user');
   if (body.password.length < 3) {
@@ -19,6 +23,7 @@ usersRouter.post('/', async (req, res) => {
       username: body.username,
       name: body.name,
       passwordHash,
+      admin: admin
     });
     const savedUser = await user.save();
     res.json(savedUser);
@@ -47,7 +52,27 @@ usersRouter.put('/:id', async (req, res) => {
     }
     // has req.body.newPsw first
     console.log('new hash: ', newHash);
-    await User.findByIdAndUpdate(req.body.user, passwordHash, newHash);
+    console.log('user: ', user);
+    //await User.findByIdAndUpdate(req.body.user, passwordHash, newHash);
+    await User.findByIdAndUpdate(req.body.user, { passwordHash: newHash }, (err, docs) => {
+      if (err) {
+        console.log(err)
+      } else {
+        console.log('updated user', docs);
+      }
+    });
+    /*
+    var user_id = '5eb985d440bd2155e4d788e2';
+    User.findByIdAndUpdate(user_id, { name: 'Gourav' },
+                                function (err, docs) {
+        if (err){
+            console.log(err)
+        }
+        else{
+            console.log("Updated User : ", docs);
+        }
+    });
+    */
     // check if current is same as hashed...if ok, do it, if false, wrong current.
     //logger.info('got password: ', password);
     //password[field] = newValue;
