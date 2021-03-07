@@ -125,7 +125,6 @@ passwordsRouter.put('/:id', async (req, res) => {
   }
 
   if (password.user.toString() === decodedToken.id) {
-    logger.info('got password: ', password);
     password[field] = newValue;
     // make the modification
     await Password.findByIdAndUpdate(req.params.id, password, { new: true });
