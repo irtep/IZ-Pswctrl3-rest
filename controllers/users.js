@@ -30,10 +30,36 @@ usersRouter.post('/', async (req, res) => {
   }
 });
 
-// user changes account password
+// admin resets password of some other user
+usersRouter.put('/reset', async (req, res) => {
+  const saltRounds = 10;
+  console.log('request to reset psw: ', req.body);
+  let user = null;
+  await User.findOne({username: req.body.user}, (err, doc) => {
+    user = doc;
+  });
+  const decodedToken = jwt.verify(req.token, process.env.SECRET);
+  if (!req.token || !decodedToken.id) {
+    return res.status(401).json({ error: 'token missing or invalid' });
+  }// check this...
+  if (user === null ) {
+    res.status(400).send('cant find user with that username');
+  } else {
+    res.json('ok');
+  }
+  console.log('user: ', user);
+  //res.json('ok');
+});
+/*
+var name = 'Peter';
+model.findOne({name: new RegExp('^'+name+'$', "i")}, function(err, doc) {
+  //Do your action here..
+});
+*/
+// user changes account password of own account
 usersRouter.put('/:id', async (req, res) => {
   const saltRounds = 10;
-  console.log('request to change account password!', req.body);
+  console.log('request to change account password!');
   const newHash = await bcrypt.hash(req.body.newPsw, saltRounds);
   const user = await User.findById(req.body.user);
   const decodedToken = jwt.verify(req.token, process.env.SECRET);
@@ -50,10 +76,6 @@ usersRouter.put('/:id', async (req, res) => {
         error: 'invalid username or password'
       });
     }
-    // has req.body.newPsw first
-    console.log('new hash: ', newHash);
-    console.log('user: ', user);
-    //await User.findByIdAndUpdate(req.body.user, passwordHash, newHash);
     await User.findByIdAndUpdate(req.body.user, { passwordHash: newHash }, (err, docs) => {
       if (err) {
         console.log(err)
@@ -61,23 +83,6 @@ usersRouter.put('/:id', async (req, res) => {
         console.log('updated user', docs);
       }
     });
-    /*
-    var user_id = '5eb985d440bd2155e4d788e2';
-    User.findByIdAndUpdate(user_id, { name: 'Gourav' },
-                                function (err, docs) {
-        if (err){
-            console.log(err)
-        }
-        else{
-            console.log("Updated User : ", docs);
-        }
-    });
-    */
-    // check if current is same as hashed...if ok, do it, if false, wrong current.
-    //logger.info('got password: ', password);
-    //password[field] = newValue;
-    // make the modification
-    //await Password.findByIdAndUpdate(req.params.id, password, { new: true });
     res.json('all ok!');
   } else {
     return res.status(401).json({ error: 'not authorized to modificate' });
