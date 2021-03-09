@@ -2,7 +2,7 @@ const config = require('./utils/config');
 const express = require('express');
 const app = express();
 require('express-async-errors');
-const cors = require('cors'); // can enable for dev purposes
+//const cors = require('cors'); // can enable for dev purposes
 const usersRouter = require('./controllers/users');
 const passwordsRouter = require('./controllers/passwords');
 const loginRouter = require('./controllers/login');
@@ -20,7 +20,7 @@ mongoose.connect(config.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology
     logger.error('error connection to MongoDB:', error.message);
   });
 
-app.use(cors()); // can enable for dev purposes
+//app.use(cors()); // can enable for dev purposes
 app.use(express.static('build'));
 app.use(express.json());
 app.use(middleware.requestLogger);
