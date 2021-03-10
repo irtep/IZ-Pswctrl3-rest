@@ -40,7 +40,8 @@ passwordsRouter.get('/', async (req, res) => {
       const decrypted = decrypt(psw.password, key);
       psw.password = decrypted;
     });
-    res.json(passwords);
+    const onlyUsersPsws = passwords.filter( pswx => pswx.user.id === decodedToken.id);
+    res.json(onlyUsersPsws);
   } else {
     res.status(404).end();
   }
